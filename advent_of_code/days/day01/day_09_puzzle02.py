@@ -1,4 +1,7 @@
 '''
+NOTE: D O E S   N O T  W O R K - Y E T !
+WORKING ON A NEW VERSION
+
 --- Part Two ---
 The Elves just remembered: they can only switch out tiles that are red or green. So, your rectangle can only include red or green tiles.
 
