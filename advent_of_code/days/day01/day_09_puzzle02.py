@@ -226,7 +226,7 @@ def is_rectangle_in_bounds(point_1, point_2,row_grid, col_grid):
     return is_point_in_red_green_space(point_3, row_grid, col_grid) and \
            is_point_in_red_green_space(point_4, row_grid, col_grid)
 
-def find_largest_rect(red_tile_positions,  row_grid, col_grid):
+def find_largest_rect_legal(red_tile_positions,  row_grid, col_grid):
     print("*** find_largest_rect ***")
     largest_area_found = -1
     red_tile_index_1 = -1
