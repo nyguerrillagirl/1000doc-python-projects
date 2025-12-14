@@ -94,141 +94,159 @@ def read_in_all_red_tile_positions(filename):
     return (red_tile_positions, max_row+1, max_col+1)
 
 
-def smartly_merge_tuple(t_under_consideration, tuple_list):
-    '''
-    This function smartly places t_under_consideration on to the tuple_list.
-    We return a new tuple_list
-    case #0 if tuple is of the form (x,y) and there exists a tuple of the form (a,b) where x <= a and b <= y the
-            replace (a,b) with (x,y)
-    case #1 if tuple is of the form (x,x) and there exists a range that includes x ...drop (x,x)
-    case #2 if tuple is of the form (x,y) remove any entries that are of the form (x,x),....up to (y,y)
-    case #3 if tuple is of the form (x,y) and there exists another tuple of the form (y,z) then combine into (x,z)
-    case #4 if tuple is of the form (x,y) and there exists another tuple of the form (y+1,z) the combine into (x,z)
-    '''
-    t_x = t_under_consideration[0]
-    t_y = t_under_consideration[1]
+# ------------------------------
+# Integer geometry primitives
+# ------------------------------
 
-    for index, tuple_point in enumerate(tuple_list):
-        x = tuple_point[0]
-        y = tuple_point[1]
-        # see if t_under_consideration is subsumed by this tuple_point
-        if (x <= t_x) and (y >= t_y):
-            # t_under_consideration is included in this tuple range point
-            return tuple_list
-        # does t_under_consideration subsume  this tuple?
-        if (x >= t_x) and (y <= t_y):
-            # this point is covered by (t_x, t_y)
-            tuple_list[index] = t_under_consideration
-            return tuple_list
-        if (t_y == x) or (t_y == x + 1):
-            # merge the new tuple into this tuple
-            new_tuple = (x, t_y)
-            tuple_list[index] = new_tuple
-            return tuple_list
-        if (y == t_x) or (y == t_x + 1):
-            new_tuple = (t_x, y)
-            tuple_list[index] = new_tuple
-            return tuple_list
-        if (t_y == x - 1):
-            # fold t_under_consideration into current tuple
-            new_tuple = (t_x, y)
-            tuple_list[index] = new_tuple
-            return tuple_list
-        if (y == t_x - 1):
-            # fold t_under_consideration into current tuple
-            new_tuple = (x, t_y)
-            tuple_list[index] = new_tuple
-            return tuple_list
-
-    # just add tuple
-    print(f"appending {t_under_consideration} to current tuple_list: {tuple_list}")
-    return tuple_list.append(t_under_consideration)
+def orient(a, b, c):
+    """
+    Orientation of triplet (a, b, c):
+    >0 = CCW, <0 = CW, 0 = collinear.
+    All integer math.
+    """
+    return (b[0] - a[0]) * (c[1] - a[1]) - \
+           (b[1] - a[1]) * (c[0] - a[0])
 
 
-def update_grids(previous_tile_position, current_tile_position, row_grid, col_grid):
-    '''
-    Updates either the row_grid or col_grid depending on the line segment orientation
-    The line segment is defined as previous_tile_position to current_tile_position
-    :param previous_tile_position:
-    :param current_tile_position:
-    :param row_grid:
-    :param col_grid:
-    :return:
-    '''
-    # connect this red_tile_position with the previous position
-    prev_row, prev_col = previous_tile_position
-    current_row, current_col = current_tile_position
-    # Determine if we update row_grid or col_grid
-    if prev_row == current_row:
-        low_col_index = min(prev_col, current_col)
-        high_col_index = max(prev_col, current_col)
-        # enter new tuple
-        #row_grid[prev_row].append((low_col_index, high_col_index))
-        print(f"\trow: {prev_row} adding range: ")
-        print(f"\trow: {prev_row} adding range: {(low_col_index, high_col_index)} to current {row_grid[prev_row]} ")
-        smartly_merge_tuple((low_col_index, high_col_index),row_grid[prev_row] )
-        print(f"\trow: {prev_row} adding range: {(low_col_index, high_col_index)} changed {row_grid[prev_row]} ")
-        for c in range(low_col_index, high_col_index+1):
-            #col_grid[c].append((prev_row, prev_row))
-            print(f"\tcol: {c} adding range: {(prev_row, prev_row)} to current {col_grid[c]} ")
-            smartly_merge_tuple((prev_row, prev_row),col_grid[c] )
-            print(f"\tcol: {c} adding range: {(prev_row, prev_row)} changed {col_grid[c]} ")
+def on_segment(a, b, c):
+    """
+    Returns True if point c lies on segment ab.
+    Assumes a, b, c are collinear.
+    """
+    return (min(a[0], b[0]) <= c[0] <= max(a[0], b[0]) and
+            min(a[1], b[1]) <= c[1] <= max(a[1], b[1]))
+
+
+def proper_intersection(A, B, C, D):
+    """
+    Returns True only if segments AB and CD intersect
+    at a point strictly inside both segments.
+    No touching, no collinearity.
+    """
+    o1 = orient(A, B, C)
+    o2 = orient(A, B, D)
+    o3 = orient(C, D, A)
+    o4 = orient(C, D, B)
+
+    # If any orientation is zero → touching or collinear → NOT proper
+    if o1 == 0 or o2 == 0 or o3 == 0 or o4 == 0:
+        return False
+
+    # Proper intersection requires opposite orientations
+    return (o1 > 0) != (o2 > 0) and (o3 > 0) != (o4 > 0)
+
+
+# ------------------------------
+# Point-in-polygon (integer)
+# Ray casting method
+# ------------------------------
+
+def point_in_polygon(pt, poly):
+    """
+    Returns True if point is inside or on boundary.
+    poly = list of vertices [(x,y), ...] in order.
+    """
+    x, y = pt
+    inside = False
+    n = len(poly)
+
+    for i in range(n):
+        a = poly[i]
+        b = poly[(i + 1) % n]
+
+        # Check if point is exactly on an edge
+        if orient(a, b, pt) == 0 and on_segment(a, b, pt):
+            return True
+
+        # Ray casting: check if edge crosses horizontal ray
+        xi, yi = a
+        xj, yj = b
+
+        intersects = ((yi > y) != (yj > y)) and \
+                     (x < (xj - xi) * (y - yi) / (yj - yi) + xi)
+
+        if intersects:
+            inside = not inside
+
+    return inside
+
+
+# ------------------------------
+# Main function:
+# Is segment AB fully inside polygon?
+# ------------------------------
+
+def segment_inside_polygon(A, B, poly):
+    """
+    Returns True if segment AB lies completely inside (or on boundary of) polygon poly.
+    poly is a list of vertices in order.
+    """
+
+    # 1. Endpoints must be inside or on boundary
+    if not point_in_polygon(A, poly):
+        return False
+    if not point_in_polygon(B, poly):
+        return False
+
+    # 2. Segment must not properly intersect any polygon edge
+    n = len(poly)
+    for i in range(n):
+        C = poly[i]
+        D = poly[(i + 1) % n]   # this connects the last point in poly with first
+
+        if proper_intersection(A, B, C, D):
+            return False
+
+    # 3. If segment lies on an edge or touches edges, that's allowed
+    return True
+
+
+def is_rectangle_in_bounds(p1, p2, polygon_edges):
+    # generate p3 and p4
+    p3 = (p1[0], p2[1])
+    p4 = (p2[0], p1[1])
+
+    if p1[0] == p2[0]:
+        return segment_inside_polygon(p1, p2, polygon_edges)
+
+    if p1[1] == p2[1]:
+        return segment_inside_polygon(p1, p2, polygon_edges)
+
+    line_segment_list = [(p1, p4), (p4, p2), (p1, p3), (p3, p2)]
+
+    result = True
+    for point1, point2 in line_segment_list:
+        if  not segment_inside_polygon(point1, point2, polygon_edges):
+            result = False
+            break
+
+    return result
+
+def absolute_value(x):
+    if x >= 0:
+        return x
     else:
-        # the prev_col == current_col
-        low_row_index = min(prev_row, current_row)
-        high_row_index = max(prev_row, current_row)
-        # enter the new tuple into col_grid
-        #col_grid[prev_col].append((low_row_index, high_row_index))
-        print(f"\tcol: {prev_col} adding range: {(low_row_index, high_row_index)} to current {col_grid[prev_col]} ")
-        smartly_merge_tuple((low_row_index, high_row_index),col_grid[prev_col] )
-        print(f"\tcol: {prev_col} adding range: {(low_row_index, high_row_index)} changed {col_grid[prev_col]} ")
-        for r in range(low_row_index, high_row_index+1):
-            #row_grid[r].append((prev_col, prev_col))
-            print(f"\trow: {r} adding range: {(prev_col, prev_col)} to current {row_grid[r]} ")
-            smartly_merge_tuple((prev_col, prev_col), row_grid[r])
-            print(f"\trow: {r} adding range: {(prev_col, prev_col)} changed {row_grid[r]} ")
+        return -x
 
-
-def create_psuedo_grids(red_tile_positions, max_rows, max_cols):
+def calculate_area(red_tile_1, red_tile_2):
     '''
-    creates a two 2D list, where one is the row_grid, where every row has a list of [ (lowest_col1, highest_col1),
-    (lowest_col2, highest_col2)...] of all the line segments on row[0], etc.
-    and a col_grid, where every col has the[(lowest_row1, highest_row1), (lowest_row2, highest_row2)...]
-    The above define the line segments created to define the polygon created by the red tiles
-    :param red_tile_positions:
+    Returns the area if these two tiles were the corners of a rectangle
+    :param red_tile_1:
+    :param red_tile_2:
     :return:
     '''
-    row_grid = [[] for i in range(max_rows)]
-    col_grid = [[] for i in range(max_cols)]
+    width = (absolute_value(red_tile_1[0] - red_tile_2[0])) + 1
+    height = (absolute_value(red_tile_1[1] - red_tile_2[1])) + 1
 
-    first_tile_position = None
-    previous_tile_position = None
-    for current_tile_position in red_tile_positions:
-        if first_tile_position is None:
-            # remember the very first tile_position to connect to last_tile_position
-            first_tile_position = current_tile_position
+    return width * height
 
-        if previous_tile_position is None:
-            previous_tile_position = current_tile_position
-            continue
-
-        update_grids(previous_tile_position, current_tile_position, row_grid, col_grid)
-
-        previous_tile_position = current_tile_position
-
-    # connect previous_tile_position to first_tile_position
-    update_grids(previous_tile_position, first_tile_position, row_grid, col_grid)
-    return row_grid, col_grid
-
-
-def find_largest_rect_legal(red_tile_positions,  row_grid, col_grid):
-    print("*** find_largest_rect ***")
+def find_largest_legal_rect(red_tile_positions):
     largest_area_found = -1
     red_tile_index_1 = -1
     red_tile_index_2 = -1
 
     for i, j in itertools.combinations(range(len(red_tile_positions)), 2):
-        if (is_rectangle_in_bounds(red_tile_positions[i], red_tile_positions[j], row_grid, col_grid)):
+        if is_rectangle_in_bounds(red_tile_positions[i], red_tile_positions[j], red_tile_positions):
             area_candidate = calculate_area(red_tile_positions[i], red_tile_positions[j])
             if area_candidate > largest_area_found:
                 largest_area_found = area_candidate
@@ -237,24 +255,35 @@ def find_largest_rect_legal(red_tile_positions,  row_grid, col_grid):
 
     return (red_tile_positions[red_tile_index_1], red_tile_positions[red_tile_index_2], largest_area_found)
 
+def process_red_tiles(red_tile_positions):
+    polygon_edges = []
+    first_point = None
+    previous_point = None
+    for tile_point in red_tile_positions:
+        if first_point is None:
+            first_point = tile_point
+            previous_point = first_point
+            continue
+        new_edge = [previous_point, tile_point]
+        polygon_edges.append(new_edge)
+        previous_point = tile_point
+
+    new_edge = [previous_point, first_point]
+    polygon_edges.append(new_edge)
+
+    return polygon_edges
+
 def main():
     # test file: day_09_test_data.txt, puzzle file:puzzle09_input.txt
     # another test file: day_09_test_data2.txt
-    red_tile_positions, max_rows, max_cols = read_in_all_red_tile_positions("day_09_test_data2.txt")
+    red_tile_positions, max_rows, max_cols = read_in_all_red_tile_positions("puzzle_09_input.txt")
     print(f"red_tile_positions: {red_tile_positions}")
-    # red_tile_positions in the form: [(r1, c1), (r2,c2), ...]
-    # we process all red_tiles obtaining the boundary of red/green tiles
-    #row_grid, col_grid = create_psuedo_grids(red_tile_positions, max_rows, max_cols)
+    #polygon_edges = process_red_tiles(red_tile_positions)
+    #print(f"polygon_edges: {polygon_edges}")
+    position_1, position_2, area_of_rect = find_largest_legal_rect(red_tile_positions)
 
-    #print(f"row_grid: {row_grid}")
-    #print(f"col_grid: {col_grid}")
-    #position_1, position_2, area_of_rect = find_largest_legal_rect(red_tile_positions, row_grid, col_grid)
-    #print(f"tile at {position_1} and tile at {position_2} form the largest legal rect of: {area_of_rect}")
+    print(f"tile at {position_1} and tile at {position_2} form the largest legal rect of: {area_of_rect}")
 
-    candidate_tuple = (0, 3)
-    tuple_list = [(0, 0), (3, 3)]
-    _ = smartly_merge_tuple(candidate_tuple, tuple_list)
-    print(f"new tuple list: {tuple_list}")
 
 if __name__ == "__main__":
     main()
