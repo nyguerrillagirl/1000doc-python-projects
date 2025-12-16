@@ -15,7 +15,6 @@ def example1():
 
 def test_parse_example1(example1):
     """Test that input is parsed properly."""
-    print(f"example1: {example1}")
     assert example1 == [12, 14, 1969, 100756]
 
 
