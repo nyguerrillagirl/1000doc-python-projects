@@ -46,6 +46,21 @@ BFFFBBFRRR: row 70, column 7, seat ID 567.
 FFFBBBFRRR: row 14, column 7, seat ID 119.
 BBFFBBFRLL: row 102, column 4, seat ID 820.
 As a sanity check, look through your list of boarding passes. What is the highest seat ID on a boarding pass?
+
+
+--- Part Two ---
+Ding! The "fasten seat belt" signs have turned on. Time to find your seat.
+
+It's a completely full flight, so your seat should be the only missing boarding pass in your list.
+However, there's a catch: some of the seats at the very front and back of the plane don't exist on this aircraft,
+so they'll be missing from your list as well.
+
+Your seat wasn't at the very front or back, though; the seats with IDs +1 and -1 from yours will be in your list.
+
+What is the ID of your seat?
+
+Answer:
+
 '''
 
 import pathlib
@@ -58,21 +73,25 @@ memo_fb = {}
 
 # This is a dictionary that tracks previous processing. The key = ( (start_range, end_range), 'R' | 'L'), the
 # value is the new range. For example, the entry for ( (0,7), 'R') ==> (4,7) and ( (0,7), 'L') ==> (0,3)
-memo_rl = {}
+memo_lr = {}
+
+# This dictionary holds all the taken seats. key: seat_id, value = (row, col, boarding_pass)
+seats_taken = {}
 
 def parse(puzzle_input):
     """Parse input."""
     return [line for line in puzzle_input.split()]
 
 
-def processFB(rowString, memo_fb):
+def processFB(rowString):
+    #print(f"memo_fb: {memo_fb}")
     result = -1
     current_range = (0,127)
     for char in rowString:
         # first check if we already have this split
         if ((current_range), char) in memo_fb:
             current_range = memo_fb[((current_range), char)]
-
+            continue
 
         # check if this range represents an entry of the form (n,n) (found row)
         if current_range[0] == current_range[1]:
@@ -101,14 +120,15 @@ def processFB(rowString, memo_fb):
     return result
 
 
-def processLR(colString, memo_rl):
+def processLR(colString):
+    #print(f"memo_fb: {memo_lr}")
     result = -1
-    current_range = (0,7)
+    current_range = (0, 7)
     for char in colString:
         # first check if we already have this split
-        if ((current_range), char) in memo_rl:
-            current_range = memo_rl[((current_range), char)]
-
+        if ((current_range), char) in memo_lr:
+            current_range = memo_lr[((current_range), char)]
+            continue
 
         # check if this range represents an entry of the form (n,n) (found row)
         if current_range[0] == current_range[1]:
@@ -120,29 +140,33 @@ def processLR(colString, memo_rl):
         r_low_range = l_high_range+1
 
         if char == 'L':
-            memo_rl[((current_range), 'L')] = (current_range[0], l_high_range)
+            memo_lr[((current_range), 'L')] = (current_range[0], l_high_range)
             # add the other side too
-            memo_rl[((current_range), 'R')] = (r_low_range, current_range[1])
-            current_range = memo_rl[((current_range), 'L')]
+            memo_lr[((current_range), 'R')] = (r_low_range, current_range[1])
+            current_range = memo_lr[((current_range), 'L')]
         else:
             # char must be 'R'
-            memo_rl[((current_range), 'R')] = ( r_low_range, current_range[1])
+            memo_lr[((current_range), 'R')] = (r_low_range, current_range[1])
             # add the other side too
-            memo_rl[((current_range), 'L')] = (current_range[0], l_high_range)
-            current_range = memo_rl[((current_range), 'R')]
+            memo_lr[((current_range), 'L')] = (current_range[0], l_high_range)
+            current_range = memo_lr[((current_range), 'R')]
 
     if result == -1:
         result = current_range[0]
 
     return result
 
+def calculate_seat_id_using_row_and_col(row_number, col_number):
+    return  row_number * 8 + col_number
+
 
 def calculate_seat_id(boarding_pass):
     # process the first 7 characters to find row number
-    row_number = processFB(boarding_pass[0:7], memo_fb)
+    row_number = processFB(boarding_pass[0:7])
     # process the next 3 characters to find col number
-    col_number = processLR(boarding_pass[7:], memo_rl)
+    col_number = processLR(boarding_pass[7:])
     seat_id = row_number * 8 + col_number
+    seats_taken[seat_id] = (row_number, col_number, boarding_pass)
 
     return seat_id
 
@@ -150,7 +174,7 @@ def part1(data):
     """Solve part 1."""
     highest_seat_id = 0
     for data_item in data:
-
+        seat_id = calculate_seat_id(data_item)
         print(f"for {data_item} seat_id: {seat_id}")
         if seat_id > highest_seat_id:
             highest_seat_id = seat_id
@@ -159,8 +183,14 @@ def part1(data):
 
 def part2(data):
     """Solve part 2."""
-    pass
+    for data_item in data:
+        _ = calculate_seat_id(data_item)
 
+    ordered_keys = sorted(list(seats_taken.keys()))
+    print(f"lowest seat_id: {seats_taken[ordered_keys[0]]}")
+    print(f"highest seat_id: {seats_taken[ordered_keys[-1]]}")
+    print(f"seat_id: {calculate_seat_id_using_row_and_col(seats_taken[ordered_keys[0]][0], seats_taken[ordered_keys[0]][1])}")
+    print(f"ordered_values: {ordered_keys}")
 
 def solve(puzzle_input):
     """Solve the puzzle for the given input."""
@@ -170,7 +200,11 @@ def solve(puzzle_input):
 
     return solution1, solution2
 
-
+# if __name__ == "__main__":
+#     seat_id = calculate_seat_id("FBFBBFFRLR")
+#     print(f"FBFBBFFRLR has seat_id: {seat_id}")
+#     seat_id = calculate_seat_id("BFFFBBFRRR")
+#     print(f"BFFFBBFRRR has seat_id: {seat_id}")
 if __name__ == "__main__":
     for path in sys.argv[1:]:
         print(f"{path}:")
