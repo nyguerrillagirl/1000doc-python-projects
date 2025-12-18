@@ -76,7 +76,7 @@ memo_fb = {}
 memo_lr = {}
 
 # This dictionary holds all the taken seats. key: seat_id, value = (row, col, boarding_pass)
-seats_taken = {}
+seats_taken = [0 for i in range(1024)]
 
 def parse(puzzle_input):
     """Parse input."""
@@ -84,7 +84,6 @@ def parse(puzzle_input):
 
 
 def processFB(rowString):
-    #print(f"memo_fb: {memo_fb}")
     result = -1
     current_range = (0,127)
     for char in rowString:
@@ -121,7 +120,6 @@ def processFB(rowString):
 
 
 def processLR(colString):
-    #print(f"memo_fb: {memo_lr}")
     result = -1
     current_range = (0, 7)
     for char in colString:
@@ -166,7 +164,8 @@ def calculate_seat_id(boarding_pass):
     # process the next 3 characters to find col number
     col_number = processLR(boarding_pass[7:])
     seat_id = row_number * 8 + col_number
-    seats_taken[seat_id] = (row_number, col_number, boarding_pass)
+    # tracks if a seat has been taken
+    seats_taken[seat_id] = 1
 
     return seat_id
 
@@ -175,22 +174,35 @@ def part1(data):
     highest_seat_id = 0
     for data_item in data:
         seat_id = calculate_seat_id(data_item)
-        print(f"for {data_item} seat_id: {seat_id}")
         if seat_id > highest_seat_id:
             highest_seat_id = seat_id
 
     return highest_seat_id
 
+def my_seat():
+    # iterate through the array seats_taken
+    # find first occupied seat
+    first_non_zero_index = -1
+    for index in range(len(seats_taken)):
+        if seats_taken[index] == 1:
+            first_non_zero_index = index
+            break
+
+    # now look for the first 0 after first occupied seat
+    zero_index = -1
+    for index in range(first_non_zero_index,len(seats_taken) ):
+        if seats_taken[index] == 0:
+            # this is my seat
+            zero_index = index
+            break
+    # this must be my seat
+    return zero_index
 def part2(data):
     """Solve part 2."""
     for data_item in data:
-        _ = calculate_seat_id(data_item)
-
-    ordered_keys = sorted(list(seats_taken.keys()))
-    print(f"lowest seat_id: {seats_taken[ordered_keys[0]]}")
-    print(f"highest seat_id: {seats_taken[ordered_keys[-1]]}")
-    print(f"seat_id: {calculate_seat_id_using_row_and_col(seats_taken[ordered_keys[0]][0], seats_taken[ordered_keys[0]][1])}")
-    print(f"ordered_values: {ordered_keys}")
+        seat_id = calculate_seat_id(data_item)
+        seats_taken[seat_id] = 1
+    return my_seat()
 
 def solve(puzzle_input):
     """Solve the puzzle for the given input."""
@@ -200,11 +212,6 @@ def solve(puzzle_input):
 
     return solution1, solution2
 
-# if __name__ == "__main__":
-#     seat_id = calculate_seat_id("FBFBBFFRLR")
-#     print(f"FBFBBFFRLR has seat_id: {seat_id}")
-#     seat_id = calculate_seat_id("BFFFBBFRRR")
-#     print(f"BFFFBBFRRR has seat_id: {seat_id}")
 if __name__ == "__main__":
     for path in sys.argv[1:]:
         print(f"{path}:")
