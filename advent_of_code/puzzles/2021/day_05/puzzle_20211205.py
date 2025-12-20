@@ -39,7 +39,7 @@ def check_col_overlap(target_col, from_row, to_row, col_dict):
     ranges_to_check = col_dict[target_col]
     for t in ranges_to_check:
         # check if there is any overlap from from_row and to_row
-
+        pass
 
 def determine_all_overlapping_lines(data2):
     row_dict = {}
