@@ -22,7 +22,7 @@ def cleanup_old_logs():
 
 
 
-def cleanup_screenshots():
+def cleanup_screenshots(screenshots_folder):
     # create timestamp for log file
     timestamp = datetime.now().strftime("%Y-%m-%d")
     log_file = SCRIPT_DIR / f"cleanup_screenshots_{timestamp}.log"
@@ -33,9 +33,6 @@ def cleanup_screenshots():
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
     logging.info("Script cleanup_screenhots started...")
-
-    # Set your screenshots folder path - C:\Users\lorra\OneDrive\Pictures\Screenshots
-    screenshots_folder = Path.home() / "OneDrive" / "Pictures" / "Screenshots"
 
     if not screenshots_folder.exists():
         logging.error(f"Folder does not exist: {screenshots_folder}")
@@ -66,5 +63,8 @@ def cleanup_screenshots():
 
 
 if __name__ == '__main__':
-    cleanup_screenshots()
+    screenshots_folder = Path.home() / "OneDrive" / "Pictures" / "Screenshots"
+    cleanup_screenshots(screenshots_folder)
+    screenshots_folder = Path.home() / "OneDrive" / "Pictures" / "Screenshots 1"
+    cleanup_screenshots(screenshots_folder)
     cleanup_old_logs()
