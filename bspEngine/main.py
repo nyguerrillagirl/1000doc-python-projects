@@ -1,16 +1,23 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from settings import *
+from engine import Engine
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+class App:
+    ray.init_window(WIN_WIDTH, WIN_HEIGHT, 'BSP Engine')
+
+    def __init__(self):
+        self.dt = 0.0
+        self.engine = Engine(app=self)
+
+    def run(self):
+        while not ray.window_should_close():
+            self.dt = ray.get_frame_time()
+            self.engine.update()
+            self.engine.draw()
+        #
+        ray.close_window()
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    app = App()
+    app.run()
