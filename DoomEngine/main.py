@@ -1,10 +1,10 @@
 from wad_data import WADData
-class DoomEngine:
-    def __init__(self, wad_path='wad/DOOM.WAD'):
-        self.wad_path = wad_path
-        self.on_init()
-    def on_init(self):
-        self.wad_data = WADData(self)
 
+
+def read_vertex(self, offset):
+    # 4 bytes = 2h + 2h
+    x = self.read_2_bytes(offset, byte_format='h')
+    y = self.read_2_bytes(offset, byte_format='h')
+    return vec2(x, y)
 if __name__ == '__main__':
     doom = DoomEngine()
