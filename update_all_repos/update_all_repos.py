@@ -42,7 +42,8 @@ def update_repo(path):
     # Commit and push
     print(f"...Updating the repo: {path}")
     run("git add .", path)
-    run(f'git commit -m "{msg}"', path)
+    #run(f'git commit -m "{msg}"', path)
+    subprocess.run(["git", "commit", "-m", msg], cwd=path)
     print(run("git push", path))
 
     print("Updated successfully.")
