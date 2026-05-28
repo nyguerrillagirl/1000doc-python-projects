@@ -14,6 +14,9 @@ REPOS = [
     r"C:\1000-days-of-code-repos\1000doc-windows-programming",
 ]
 
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
 
 def run(cmd, cwd):
     """Run a shell command inside a specific directory and return output."""
@@ -22,7 +25,7 @@ def run(cmd, cwd):
 
 
 def update_repo(path):
-    print(f"\n=== Checking repo: {path} ===")
+    print(f"\n{CYAN}=== Checking repo: {path} ==={RESET}")
 
     # Check for changes
     status = run("git status --porcelain", path)
