@@ -13,6 +13,7 @@ REPOS = [
     r"C:\1000-days-of-code-repos\1000doc-react-projects",
     r"C:\1000-days-of-code-repos\1000doc-windows-programming",
     r"C:\1000-days-of-code-repos\1000doc-dos-games",
+    r"C:\1000-days-of-code-repos\1000doc-godot-projects",
 ]
 
 CYAN = "\033[96m"
