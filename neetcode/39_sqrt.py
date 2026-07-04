@@ -16,23 +16,28 @@
 #   Output: 2
 #   Explanation: The square root of 8 is 2.82842..., and since we round it down
 #                   to the nearest integer, 2 is returned.
-
-delta = 0.001
+# see notes: https://github.com/nyguerrillagirl/1000doc-docs/blob/main/repo_docs/1000doc-python-projects/neetcode/39_sqrt_notes.docx
+import math
+eplison = 0.0001
 def my_sqrt(x):
-    sqrt_bottom_estimate = 0.0
-    sqrt_top_estimate = x / 2.0
-
+    y1 = x / 2.0
+    y0 = 0
     while True:
-        if ((sqrt_top_estimate * sqrt_top_estimate) - x) < delta:
-            return round(sqrt_top_estimate)
+        if ((y1 * y1) - x) < eplison:
+            return round(y1)
 
         # adjust top_estimate
-        sqrt_top_estimate = sqrt_top_estimate - 0.5
+        y1 = 0.5 * (y1 + (x / y1))
 
+        # check if we can stop now
+        if math.floor(y0) == math.floor(y1):
+            return math.floor(y1)
+        else:
+            y0 = y1
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    x = 25
+    x = 8
     print(f"x={x} is {my_sqrt(x)}.")
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
