@@ -15,6 +15,7 @@ REPOS = [
     r"C:\1000-days-of-code-repos\1000doc-dos-games",
     r"C:\1000-days-of-code-repos\1000doc-godot-projects",
     r"C:\1000-days-of-code-repos\1000doc-sdl2-create-games",
+    r"C:\1000-days-of-code-repos\1000doc-coding-challenges",
 ]
 
 CYAN = "\033[96m"
