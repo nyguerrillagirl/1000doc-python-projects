@@ -1,0 +1,81 @@
+# ============================
+# Python
+# ============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Virtual environments (conda, venv)
+env/
+venv/
+.venv/
+.env/
+conda-env/
+*.conda
+*.lock
+
+# ============================
+# Numba
+# ============================
+# Numba stores compiled cache files in __pycache__ by default,
+# but if you use @njit(cache=True) it may create .nbc files.
+*.nbc
+
+# If you manually set NUMBA_CACHE_DIR, ignore it:
+numba_cache/
+
+# ============================
+# Jupyter Notebooks
+# ============================
+.ipynb_checkpoints/
+.jupyter/
+*.nbconvert.ipynb
+
+# Jupyter runtime files
+.jupyter/
+.local/share/jupyter/runtime/
+
+# ============================
+# PyCharm / JetBrains IDE
+# ============================
+.idea/
+*.iml
+
+# ============================
+# VS Code (Python)
+# ============================
+.vscode/
+.history/
+
+# ============================
+# Build / packaging
+# ============================
+build/
+dist/
+site/
+wheelhouse/
+*.whl
+
+# ============================
+# C extensions (if using Numba/Cython)
+# ============================
+*.so
+*.c
+*.cpp
+
+# ============================
+# OS junk
+# ============================
+.DS_Store
+Thumbs.db
+
+# ============================
+# Backup files
+# ============================
+*~
+*.bak
