@@ -1,0 +1,16 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+
+url = 'https://assets.datacamp.com/production/course_1606/datasets/winequality-red.csv'
+
+# Read file into a DataFrame: df
+df = pd.read_csv(url, sep=';')
+
+# Print the head of the DataFrame
+print(df.head())
+
+# Plot first column of df
+df.iloc[:,0].hist()
+plt.xlabel('fixed acidity (g(tartaric acid)/dm$^3$)')
+plt.ylabel('count')
+plt.show()
