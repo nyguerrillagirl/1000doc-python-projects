@@ -10,74 +10,72 @@ class Solution:
         if len(fruits) == 1:
             return 1
 
-        left = 0
-        max_fruits = 0
+        last_fruit_seen = -1                # use to calculate
+        total_fruits = 0
+        if fruits[0] == fruits[1]:
+            # same fruit in slot #1 and #2, put them both in basket_1
+            basket_1 = [fruits[0], 2, 0, 1]  # [fruit_type, count, start_index, end_index]
+            basket_2 = [-1, 0, -1, -1]       # basket 2 is empty
+            last_fruit_seen = basket_1[0]
+        else:
+            basket_1 = [fruits[0], 1, 0, 0]
+            basket_2 = [fruits[1], 1, 1, 1]
+            last_fruit_seen = basket_2[0]
 
-        # tracks information on first basket
-        has_basket1_fruits = False
-        basket1_fruit = -1
-        basket1_total = 0
-        basket1_longest_seq = 0
+        total_fruits = max(total_fruits, basket_1[1] + basket_2[1])
 
-        # tracks information on second basket
-        has_basket2_fruits = False
-        basket2_fruit = -1
-        basket2_total = 0
-        basket2_longest_seq = 0
+        for right in range(2,len(fruits)):
+            current_fruit = fruits[right]
+            if (current_fruit == basket_1[0]) or (current_fruit == basket_2[0]):
+                # this fruit belongs in basket_1 or basket_2
+                if current_fruit == basket_1[0]:
+                    # belongs in basket_1
+                    basket_1[1] += 1    # increase the count
+                    if current_fruit == last_fruit_seen:
+                        basket_1[3] += 1    # increase the end_index (for run we have seen)
+                    else:
+                        basket_1[2] = basket_1[3] = right
 
-        for right, fruit_type in enumerate(fruits):
-            if has_basket1_fruits and basket1_fruit == fruit_type:
-                basket1_total += 1
-                if fruits[right-1] == fruit_type:
-                    basket1_longest_seq += 1
-                    #basket2_longest_seq = 0
-                max_fruits = max(max_fruits, basket1_total+basket2_total)
-                continue
-            elif not has_basket1_fruits:
-                has_basket1_fruits = True
-                basket1_fruit = fruits[right]
-                basket1_total = 1
-                basket1_longest_seq = 1
-                #basket2_longest_seq = 1
-                max_fruits = max(max_fruits, basket1_total + basket2_total)
-                continue
-            if has_basket2_fruits and basket2_fruit == fruit_type:
-                basket2_total += 1
-                if fruits[right-1] == fruit_type:
-                    basket2_longest_seq += 1
-                    #basket1_longest_seq = 0
-                max_fruits = max(max_fruits, basket1_total + basket2_total)
-                continue
-            elif not has_basket2_fruits:
-                has_basket2_fruits = True
-                basket2_fruit = fruits[right]
-                basket2_longest_seq = 1
-                #basket1_longest_seq = 0
-                basket2_total = 1
-                max_fruits = max(max_fruits, basket1_total + basket2_total)
-                continue
+                    last_fruit_seen = current_fruit
+                    total_fruits = max(total_fruits, basket_1[1] + basket_2[1])
+                    continue
 
-            # if we get here than fruit_type was not found in basket1 or basket2
-            # figure out previous fruit_type
-            if basket1_fruit == fruits[right-1]:
-                # update 2nd basket
-                basket2_fruit = fruits[right]
-                basket2_total = 1
-                basket2_longest_seq = 1
-                basket1_fruit = basket1_longest_seq
+                if current_fruit == basket_2[0]:
+                    # this fruit belongs in basket_2
+                    basket_2[1] += 1    # increase the count
+                    if current_fruit == last_fruit_seen:
+                        basket_2[3] += 1
+                    else:
+                        basket_2[2] = basket_2[3] = right
+                    last_fruit_seen = current_fruit
+                    total_fruits = max(total_fruits, basket_1[1] + basket_2[1])
+                    continue
             else:
-                # update 1st basket
-                basket1_fruit = fruits[right]
-                basket1_total = 1
-                basket1_longest_seq = 1
-                basket2_fruit = basket2_longest_seq
+                # this is fruit we have not seen in our baskets yet
+                if basket_2[0] == -1:
+                    # enter this new fruit into basket_2 which is unused yet
+                    basket_2 = [current_fruit, 1, right, right]
+                    total_fruits = max(total_fruits, basket_1[1] + basket_2[1])
+                    last_fruit_seen = current_fruit
+                    continue
+                else:
+                    # the last_fruit_seen must have matched either basket_1 or basket_2, keep that
+                    # and clear the other basket
+                    if basket_1[0] == last_fruit_seen:
+                        # keep basket_1, change total to end_index-start_index+1
+                        basket_1[1] = basket_1[3] - basket_1[2] + 1 # update total to match the last sequence
+                        # move new fruit into basket_2
+                        basket_2 = [current_fruit, 1, right, right]
+                    else:
+                        # keep basket_2, place new fruit into basket_1
+                        basket_2[1] = basket_2[3] - basket_2[2] + 1
+                        basket_1 = [current_fruit, 1, right, right]
+                    last_fruit_seen = current_fruit
+                    total_fruits = max(total_fruits, basket_1[1] + basket_2[1])
 
-            max_fruits = max(max_fruits, basket1_total + basket2_total)
-
-        return max_fruits
-
+        return total_fruits
 
 solution = Solution()
-s = [1,0,1,4,1,4,1,2,3]
+s = [1,2,3,2,2]
 
-print(solution.totalFruit(s))
+print(f"total_fruits: {solution.totalFruit(s)}")
