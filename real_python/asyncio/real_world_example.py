@@ -1,10 +1,12 @@
 import asyncio
 import aiohttp
 
+
 async def fetch(session, url):
     async with session.get(url) as response:
         content = await response.text()
         return url, len(content)
+
 
 async def main():
     urls = [
